@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>物理贴贴 · 星云螺旋闯关</title>
+    <style>
+        :root {
+            --gold: #f0c040; --warm: #fff8ed; --card-bg: #fffaf0; --btn-gold: #e8a838;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background: #0a1a3a; font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        .app { width: 100%; max-width: 500px; height: 100vh; max-height: 950px; position: relative; overflow: hidden; background: #fef7e0; box-shadow: 0 0 60px rgba(100,160,220,0.4); border-radius: 16px; }
+        .screen { position: absolute; inset:0; display:flex; flex-direction:column; width:100%; height:100%; overflow-y:auto; }
+        .screen.hidden { display:none !important; }
+        .login-screen, .cover-screen { background: radial-gradient(ellipse at 50% 50%, #1a3a6a 0%, #0e2245 30%, #0a1a3a 55%, #060e20 100%); z-index:30; align-items:center; justify-content:center; text-align:center; overflow:hidden; position:relative; }
+        .cover-screen { z-index:20; padding:15px 0; }
+        .cosmic-bg { position:absolute; inset:0; pointer-events:none; }
+        .star-particle { position:absolute; background:#fff; border-radius:50%; animation: starPulse var(--d) ease-in-out infinite; animation-delay: var(--dl); }
+        @keyframes starPulse { 0%,100%{opacity:0.3;transform:scale(0.6)} 50%{opacity:1;transform:scale(1.5)} }
+        .shooting-star { position:absolute; width:2px; height:2px; background:#fff; border-radius:50%; animation: shoot 3s linear infinite; animation-delay: var(--dl); box-shadow:0 0 8px 2px rgba(255,255,255,0.6); }
+        @keyframes shoot { 0%{transform:translate(0,0);opacity:1} 30%{opacity:1} 100%{transform:translate(-200px,120px);opacity:0} }
+        .nebula-glow { position:absolute; border-radius:50%; filter:blur(40px); opacity:0.25; pointer-events:none; }
+        .ng1{width:180px;height:100px;background:#2a5a9a;top:10%;left:15%}.ng2{width:140px;height:80px;background:#1a4080;top:55%;right:10%}.ng3{width:120px;height:70px;background:#3a3060;bottom:15%;left:20%}
+        .spiral-container { position:relative; width:100%; max-width:420px; height:420px; margin:0 auto; flex-shrink:0; }
+        .spiral-track { position:absolute; inset:0; border-radius:50%; border:1px dashed rgba(255,215,0,0.15); animation: trackRotate 30s linear infinite; }
+        .spiral-track:nth-child(1){width:100%;height:100%;top:0;left:0}.spiral-track:nth-child(2){width:82%;height:82%;top:9%;left:9%;animation-duration:25s;animation-direction:reverse}.spiral-track:nth-child(3){width:64%;height:64%;top:18%;left:18%;animation-duration:20s}.spiral-track:nth-child(4){width:46%;height:46%;top:27%;left:27%;animation-duration:18s;animation-direction:reverse}
+        @keyframes trackRotate { 100%{transform:rotate(360deg)} }
+        .center-core { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:50px; height:50px; border-radius:50%; background:radial-gradient(circle,#fff8c0 0%,#e8a838 30%,#c08020 70%,transparent 100%); box-shadow:0 0 30px rgba(240,192,64,0.6),0 0 60px rgba(240,180,40,0.3); animation:corePulse 2s ease-in-out infinite; z-index:10; }
+        @keyframes corePulse { 0%,100%{transform:translate(-50%,-50%) scale(1)} 50%{transform:translate(-50%,-50%) scale(1.2)} }
+        .planet-spiral { position:absolute; width:52px; height:52px; border-radius:50%; cursor:pointer; transition:0.3s; display:flex; align-items:center; justify-content:center; box-shadow:0 0 15px rgba(0,0,0,0.3); z-index:5; animation:planetOrbit var(--orbit-speed) linear infinite; }
+        .planet-spiral:hover { transform:scale(1.2); filter:brightness(1.4); z-index:15; }
+        .planet-spiral.locked { opacity:0.35; cursor:not-allowed; filter:grayscale(0.7); }
+        .planet-spiral.locked:hover { transform:none; filter:grayscale(0.7); }
+        .planet-spiral.completed { box-shadow:0 0 20px gold,0 0 40px rgba(255,215,0,0.4); animation-play-state:paused; }
+        .planet-label-spiral { position:absolute; bottom:-18px; left:50%; transform:translateX(-50%); font-size:0.5em; font-weight:bold; color:#ffd966; white-space:nowrap; text-shadow:0 0 6px rgba(0,0,0,0.6); pointer-events:none; }
+        @keyframes planetOrbit { 0%{transform:rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg)} 100%{transform:rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg)} }
+        .ps-earth{background:radial-gradient(circle at 38% 35%,#5baee8,#1a6090,#0a3050)}
+        .ps-moon{background:radial-gradient(circle at 40% 35%,#d8d8d8,#909090,#505050)}
+        .ps-mars{background:radial-gradient(circle at 40% 35%,#e07050,#a03020,#601010)}
+        .ps-jupiter{background:radial-gradient(circle at 40% 35%,#e8c888,#c09050,#a07030,#604020)}
+        .ps-saturn{background:radial-gradient(circle at 40% 35%,#f0d890,#d0b060,#906830)}
+        .ps-uranus{background:radial-gradient(circle at 40% 35%,#a0d8e8,#4088a0,#205060)}
+        .ps-neptune{background:radial-gradient(circle at 40% 35%,#6088e0,#2040a0,#102060)}
+        .ps-kepler{background:radial-gradient(circle at 40% 35%,#c080e0,#7040a0,#402060)}
+        .login-screen input, .cover-screen input { display:block; width:80%; max-width:260px; margin:10px auto; padding:12px; border-radius:24px; border:2px solid var(--gold); font-size:1rem; text-align:center; background:rgba(255,255,255,0.9); position:relative; z-index:20; }
+        .login-screen button, .cover-screen button { background:var(--gold); color:#1a1000; border:none; padding:12px 32px; border-radius:30px; font-weight:bold; cursor:pointer; font-size:1rem; margin:4px; position:relative; z-index:20; }
+        .login-screen .admin-link { color:#ffd966; font-size:0.85em; cursor:pointer; text-decoration:underline; margin-top:10px; display:inline-block; position:relative; z-index:20; }
+        .login-screen h2, .cover-screen h2 { color:#ffd966; position:relative; z-index:20; font-size:1.2em; }
+        .title h1 { font-size:1.6em; background:linear-gradient(#ffeaa7,#e8a838,#c08020); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin:0; position:relative; z-index:20; }
+        .title p, .tab-bar { position:relative; z-index:20; }
+        .game-screen { background:var(--warm); z-index:15; }
+        .rank-screen { background:var(--warm); z-index:15; overflow-y:auto; padding:16px; }
+        .stairs-panel { padding:18px; text-align:center; }
+        .stair-btn { display:inline-block; padding:10px 16px; margin:5px; border-radius:18px; border:2px solid #e0c8a0; background:var(--card-bg); cursor:pointer; font-weight:bold; font-size:0.95rem; color:#5a4020; transition:0.15s; }
+        .stair-btn.done { background:#5ec49a; color:#fff; border-color:#5ec49a; }
+        .stair-btn.locked { background:#ddd; color:#aaa; cursor:not-allowed; }
+        .top-bar { background:#f5e6c8; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; gap:5px; flex-wrap:wrap; border-bottom:2px solid #d4b88c; }
+        .badge { padding:5px 12px; border-radius:14px; font-weight:bold; font-size:0.8em; }
+        .badge.room { background:var(--btn-gold); color:#fff; } .badge.stair { color:#5a4020; flex:1; text-align:center; font-size:0.85em; }
+        .badge.score { background:#e0d0b0; } .badge.moves { background:#d97060; color:#fff; }
+        .stage-dots { display:flex; gap:6px; padding:6px 14px; justify-content:center; background:#fef3d4; flex-wrap:wrap; }
+        .stage-dot { width:24px; height:24px; border-radius:50%; background:#e0c8a0; display:flex; align-items:center; justify-content:center; font-size:0.75em; }
+        .stage-dot.done { background:#5ec49a; color:#fff; } .stage-dot.current { background:var(--btn-gold); color:#fff; box-shadow:0 0 10px var(--btn-gold); }
+        .stage-dot.locked { background:#ddd; color:#aaa; }
+        .card-grid { flex:1; overflow-y:auto; padding:16px; display:grid; grid-template-columns:1fr 1fr; gap:16px; background:#fef3d4; align-content:start; }
+        .pcard { background:var(--card-bg); border-radius:20px; min-height:90px; display:flex; align-items:center; justify-content:center; text-align:center; font-weight:700; font-size:1rem; padding:12px 6px; border:2px solid #e0c8a0; cursor:pointer; transition:0.1s; box-shadow:0 4px 0 rgba(0,0,0,0.05); word-break:break-word; position:relative; }
+        .pcard:active { transform:translateY(2px); } .pcard.selected { border-color:var(--btn-gold)!important; background:#fff4d8; box-shadow:0 0 18px rgba(232,168,56,0.5); }
+        .pcard.eliminated { visibility:hidden; opacity:0; transform:scale(0.7); transition:0.3s; }
+        .pcard.hint-glow { animation: hint 0.6s ease-in-out 3; border-color:#ffd700!important; }
+        @keyframes hint { 0%,100%{box-shadow:0 0 8px gold} 50%{box-shadow:0 0 28px gold} }
+        .dock { background:#f5e6c8; padding:10px; display:flex; gap:6px; justify-content:center; flex-wrap:wrap; border-top:2px solid #d4b88c; }
+        .itm { background:var(--card-bg); border:1px solid #c0a878; padding:9px 14px; border-radius:20px; font-size:0.78em; cursor:pointer; display:flex; align-items:center; gap:4px; }
+        .cnt { background:var(--btn-gold); color:#fff; border-radius:8px; padding:2px 7px; font-size:0.7em; font-weight:bold; }
+        .rank-item { display:flex; align-items:center; gap:10px; padding:12px 16px; background:var(--card-bg); border-radius:16px; margin:8px 0; border:1px solid #e0c8a0; }
+        .rank-num { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:0.9em; }
+        .rank-num.gold{background:#ffd700;color:#5a4020}.rank-num.silver{background:#c0c0c0;color:#333}.rank-num.bronze{background:#cd7f32;color:#fff}
+        .rank-num.normal{background:#e0c8a0;color:#5a4020}.rank-name{flex:1;font-weight:bold;color:#4b3a2a;font-size:0.9em}.rank-score{color:var(--btn-gold);font-weight:bold;font-size:0.95em}
+        .admin-panel { padding:16px; background:var(--card-bg); border-radius:16px; margin:16px 0; border:2px solid #d97060; }
+        .admin-panel button { background:#d97060; color:#fff; border:none; padding:7px 14px; border-radius:10px; margin:3px; cursor:pointer; font-size:0.8em; }
+        .admin-panel input { padding:8px; border-radius:10px; border:1px solid #c0a878; margin:3px; }
+        .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--btn-gold);color:#1a1000;padding:10px 24px;border-radius:22px;z-index:200;animation:slide 0.3s;font-size:0.9em}
+        @keyframes slide{from{opacity:0;transform:translateX(-50%) translateY(20px)}}
+        .modal{position:absolute;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:30}
+        .modal-box{background:var(--card-bg);padding:24px;border-radius:22px;text-align:center;max-width:300px;width:85%;border:2px solid var(--btn-gold)}
+        .modal-box button{background:var(--btn-gold);color:#1a1000;border:none;padding:10px 22px;border-radius:20px;margin:4px;font-weight:bold;cursor:pointer;font-size:0.9em}
+        .combo-pop{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);font-size:2.5rem;font-weight:900;color:var(--btn-gold);text-shadow:0 0 18px rgba(232,168,56,0.8);animation:comboAnim 0.8s ease-out forwards;pointer-events:none;z-index:250}
+        @keyframes comboAnim{0%{opacity:0;transform:translate(-50%,-50%) scale(0.5)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}}
+        .tab-bar{display:flex;gap:8px;padding:8px 14px;justify-content:center}
+        .tab-btn{padding:8px 18px;border-radius:16px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);cursor:pointer;font-weight:bold;font-size:0.85em;color:#fff}
+        .tab-btn.active{background:var(--btn-gold);color:#1a1000;border-color:var(--btn-gold)}
+    </style>
+</head>
+<body>
+<div class="app" id="app">
+    <div class="screen login-screen" id="loginScreen">
+        <div class="cosmic-bg" id="loginCosmicBg"></div>
+        <div class="nebula-glow ng1"></div><div class="nebula-glow ng2"></div>
+        <h2 style="position:relative;z-index:20;">🔐 物理学家昵称</h2>
+        <input type="text" id="nicknameInput" placeholder="例如：爱因斯坦">
+        <button id="btnLogin">🏛️ 进入星云螺旋</button>
+        <div class="admin-link" id="adminLink">🔑 管理员入口</div>
+    </div>
+    <div class="screen login-screen hidden" id="adminLoginScreen">
+        <div class="cosmic-bg" id="adminCosmicBg"></div>
+        <div class="nebula-glow ng3"></div>
+        <h2 style="position:relative;z-index:20;">🔑 管理员登录</h2>
+        <input type="password" id="adminPasswordInput" placeholder="请输入管理密码">
+        <button id="btnAdminLogin">确认</button>
+        <button id="btnBackUser" style="background:transparent;border:1px solid rgba(255,255,255,0.4);color:#ffd966;">返回</button>
+    </div>
+    <div class="screen cover-screen hidden" id="coverScreen">
+        <div class="cosmic-bg" id="coverCosmicBg"></div>
+        <div class="nebula-glow ng1"></div><div class="nebula-glow ng2"></div><div class="nebula-glow ng3"></div>
+        <div class="spiral-container">
+            <div class="spiral-track"></div><div class="spiral-track"></div><div class="spiral-track"></div><div class="spiral-track"></div>
+            <div class="center-core"></div>
+            <div class="planet-spiral ps-earth" style="top:50%;left:50%;--orbit-radius:65px;--orbit-speed:12s;animation-delay:0s;" data-room="0"><span class="planet-label-spiral">伽利略</span></div>
+            <div class="planet-spiral ps-moon" style="top:50%;left:50%;--orbit-radius:65px;--orbit-speed:12s;animation-delay:-6s;" data-room="1"><span class="planet-label-spiral">牛顿</span></div>
+            <div class="planet-spiral ps-mars" style="top:50%;left:50%;--orbit-radius:100px;--orbit-speed:16s;animation-delay:-3s;" data-room="2"><span class="planet-label-spiral">阿基米德</span></div>
+            <div class="planet-spiral ps-jupiter" style="top:50%;left:50%;--orbit-radius:100px;--orbit-speed:16s;animation-delay:-11s;" data-room="3"><span class="planet-label-spiral">帕斯卡</span></div>
+            <div class="planet-spiral ps-saturn" style="top:50%;left:50%;--orbit-radius:135px;--orbit-speed:20s;animation-delay:-5s;" data-room="4"><span class="planet-label-spiral">欧姆</span></div>
+            <div class="planet-spiral ps-uranus" style="top:50%;left:50%;--orbit-radius:135px;--orbit-speed:20s;animation-delay:-15s;" data-room="5"><span class="planet-label-spiral">法拉第</span></div>
+            <div class="planet-spiral ps-neptune" style="top:50%;left:50%;--orbit-radius:168px;--orbit-speed:25s;animation-delay:-8s;" data-room="6"><span class="planet-label-spiral">焦耳</span></div>
+            <div class="planet-spiral ps-kepler" style="top:50%;left:50%;--orbit-radius:168px;--orbit-speed:25s;animation-delay:-20s;" data-room="7"><span class="planet-label-spiral">爱因斯坦</span></div>
+        </div>
+        <div class="title"><h1>物理贴贴</h1></div>
+        <p style="color:#ffd966;font-size:0.85em;position:relative;z-index:20;">欢迎，<span id="welcomeUser"></span>！<span id="adminBadge" style="color:#ffd966;display:none;">[管理员]</span></p>
+        <p style="color:#aac;font-size:0.7em;position:relative;z-index:20;">547组知识配对 · 物理量/单位/符号/公式全覆盖</p>
+        <div class="tab-bar">
+            <button class="tab-btn active" id="tabGame">🏛️ 星云螺旋</button>
+            <button class="tab-btn" id="tabRank">🏆 排行榜</button>
+        </div>
+        <button id="btnLogout" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:#ffd966;padding:7px 16px;border-radius:16px;cursor:pointer;margin-top:8px;position:relative;z-index:20;">切换账号</button>
+    </div>
+    <div class="screen rank-screen hidden" id="rankScreen">
+        <h2 style="text-align:center;color:#5a4020;padding:16px;">🏆 学霸排行榜</h2>
+        <div id="rankList"></div><div id="adminPanelContainer"></div>
+        <button id="btnBackCover" style="display:block;margin:16px auto;background:var(--btn-gold);color:#1a1000;border:none;padding:11px 26px;border-radius:20px;cursor:pointer;font-weight:bold;">返回星云螺旋</button>
+    </div>
+    <div class="screen rank-screen hidden" id="stairsPanelScreen">
+        <div class="stairs-panel" id="stairsPanelContent"></div>
+        <button id="btnBackFromStairs" style="display:block;margin:16px auto;background:var(--btn-gold);color:#1a1000;border:none;padding:11px 26px;border-radius:20px;cursor:pointer;font-weight:bold;">返回星云螺旋</button>
+    </div>
+    <div class="screen game-screen hidden" id="gameScreen">
+        <div class="top-bar">
+            <span class="badge room" id="roomTag"></span><span class="badge stair" id="stairTag"></span>
+            <span class="badge score">🏆<span id="scoreVal">0</span></span>
+            <span class="badge moves">👟<span id="movesVal">8</span></span>
+            <button class="itm" id="btnBackHome" style="background:var(--btn-gold);color:#fff;">🏠</button>
+        </div>
+        <div class="stage-dots" id="stageDots"></div><div class="card-grid" id="cardGrid"></div>
+        <div class="dock">
+            <button class="itm" id="btnHint">💡<span class="cnt" id="hintCnt">2</span></button>
+            <button class="itm" id="btnShuffle">🔀<span class="cnt" id="shuffleCnt">2</span></button>
+            <button class="itm" id="btnBomb">💣<span class="cnt" id="bombCnt">1</span></button>
+            <button class="itm" id="btnShare">📢+3步</button>
+        </div>
+    </div>
+    <div id="modalContainer"></div><div id="toastContainer"></div>
+</div>
+
+<script>
+(function(){
+    var $=function(id){return document.getElementById(id);};
+    var PREF='pgV30_',RNK='rnkV30',APW='apw30';
+    var ia2=false,ig2=false,pn='';
+    var cr=0,cs=0,ts=0,cds=[],si2=null,mv=8,hn=2,sn=2,bn=1;
+    var ga=false,pc=false,ri=[],us={},rc2={},ra={};
+    var ax=null;
+    function iA(){if(!ax)try{ax=new AudioContext();}catch(e){}if(ax&&ax.state==='suspended')ax.resume();}
+    function tn(f,t,d,v){if(!ax)return;var o=ax.createOscillator(),g=ax.createGain();o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v||0.04,ax.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ax.currentTime+d);o.connect(g);g.connect(ax.destination);o.start();o.stop(ax.currentTime+d);}
+    function sc2(){tn(660,'sine',0.1);tn(880,'sine',0.1,0.07);}function sw2(){tn(250,'square',0.15);}function sco2(){tn(880,'triangle',0.08);tn(1100,'triangle',0.08,0.06);tn(1320,'triangle',0.1,0.08);}
+
+    function initCosmic(id){var c=$(id);if(!c)return;c.innerHTML='';for(var i=0;i<70;i++){var d=document.createElement('div');d.className='star-particle';var s=Math.random()*2+0.5;d.style.cssText='left:'+Math.random()*100+'%;top:'+Math.random()*100+'%;width:'+s+'px;height:'+s+'px;--d:'+(Math.random()*3+2)+'s;--dl:'+Math.random()*3+'s;';c.appendChild(d);}for(var j=0;j<3;j++){var sh=document.createElement('div');sh.className='shooting-star';sh.style.cssText='left:'+(60+Math.random()*30)+'%;top:'+(10+Math.random()*30)+'%;--dl:'+(Math.random()*4+j*2)+'s;';c.appendChild(sh);}}
+    initCosmic('loginCosmicBg');initCosmic('adminCosmicBg');initCosmic('coverCosmicBg');
+
+    function sp(){var d={cr:cr,cs:cs,ts:ts,hn:hn,sn:sn,bn:bn,us:us,rc:rc2,ra:ra,ia:ia2,iga:ig2};localStorage.setItem(PREF+pn,JSON.stringify(d));if(pn)localStorage.setItem('lu4',pn);}
+    function lp(){if(!pn)return false;var s=localStorage.getItem(PREF+pn);if(s){try{var d=JSON.parse(s);cr=d.cr||0;cs=d.cs||0;ts=d.ts||0;hn=d.hn??2;sn=d.sn??2;bn=d.bn??1;us=d.us||{};rc2=d.rc||{};ra=d.ra||{};ia2=d.ia||false;ig2=d.iga||false;return true;}catch(e){}}return false;}
+    function gR(){var s=localStorage.getItem(RNK);return s?JSON.parse(s):{users:{}};}
+    function sR(r){localStorage.setItem(RNK,JSON.stringify(r));}
+    function cA(){return RMS.every(function(r){return rc2[r.id];});}
+    function ru(idx){if(ig2||ia2||rc2[idx]||rc2[idx-1]||idx===0)return true;return(us[RMS[idx-1]?RMS[idx-1].id:0]||0)>=(RMS[idx-1]?RMS[idx-1].tS:0);}
+    function rcc(idx){return rc2[idx]||(us[idx]||0)>=RMS[idx].tS;}
+    function utl(){document.querySelectorAll('.planet-spiral').forEach(function(p){var ri=parseInt(p.dataset.room);p.classList.remove('locked','completed');if(rcc(ri))p.classList.add('completed');else if(!ru(ri))p.classList.add('locked');});}
+    function uS(n,sc){var r=gR();if(!r.users[n])r.users[n]={name:n,score:0};if(sc>r.users[n].score)r.users[n].score=sc;sR(r);}
+    function t(msg){$('toastContainer').innerHTML='<div class="toast">'+msg+'</div>';setTimeout(function(){$('toastContainer').innerHTML='';},2000);}
+    function sM(t2,m,b){$('modalContainer').innerHTML='<div class="modal"><div class="modal-box"><h3>'+t2+'</h3><p>'+(m||'')+'</p><div>'+(b||'')+'</div></div></div>';}
+    function hM(){$('modalContainer').innerHTML='';}
+    function sAL(){$('loginScreen').classList.add('hidden');$('adminLoginScreen').classList.remove('hidden');}
+    function bUL(){$('adminLoginScreen').classList.add('hidden');$('loginScreen').classList.remove('hidden');}
+    function aL(){var pw=$('adminPasswordInput').value;var spw=localStorage.getItem(APW)||'admin888';if(pw===spw){ia2=true;ig2=true;pn='管理员';$('welcomeUser').textContent=pn;$('adminBadge').style.display='inline';$('adminLoginScreen').classList.add('hidden');$('coverScreen').classList.remove('hidden');sp();t('✅管理员');}else t('❌密码错误');}
+    function login(){var inp=$('nicknameInput').value.trim();if(!inp)return;pn=inp;var has=lp();if(!has){cr=0;cs=0;ts=0;hn=2;sn=2;bn=1;us={};rc2={};ra={};ia2=false;ig2=false;}if(cA()){ia2=true;ig2=true;}$('welcomeUser').textContent=pn;if(ia2||ig2||Object.values(ra).some(function(v){return v;}))$('adminBadge').style.display='inline';else $('adminBadge').style.display='none';$('loginScreen').classList.add('hidden');$('coverScreen').classList.remove('hidden');utl();sp();}
+    function logout(){pn='';us={};rc2={};ra={};ia2=false;ig2=false;$('coverScreen').classList.add('hidden');$('gameScreen').classList.add('hidden');$('rankScreen').classList.add('hidden');$('stairsPanelScreen').classList.add('hidden');$('loginScreen').classList.remove('hidden');}
+    function rap(){var apc=$('adminPanelContainer');if(!apc)return;if(!ig2&&!ia2){apc.innerHTML='';return;}var r=gR();var users=Object.values(r.users).sort(function(a,b){return b.score-a.score;});var h='<div class="admin-panel"><h3>管理面板</h3><p>用户：'+users.length+'</p>';h+='<input id="rstNm" placeholder="用户昵称"><button id="bRst">重置</button>';h+='<button id="bClr" style="background:#900;">清除全部</button>';h+='<br><input type="password" id="newPw" placeholder="新密码"><button id="bChpw">修改密码</button></div>';apc.innerHTML=h;setTimeout(function(){var b1=$('bRst'),b2=$('bClr'),b3=$('bChpw');if(b1)b1.onclick=function(){var nm=$('rstNm')?.value?.trim();if(!nm){t('请输入昵称');return;}var r=gR();if(r.users[nm]){delete r.users[nm];sR(r);t('✅已重置');rRL();}else t('未找到');};if(b2)b2.onclick=function(){if(confirm('清除全部？')){localStorage.removeItem(RNK);t('✅已清除');rRL();}};if(b3)b3.onclick=function(){var np=$('newPw')?.value;if(!np){t('请输入新密码');return;}localStorage.setItem(APW,np);t('✅已修改');};},100);}
+    function rRL(){var r=gR();var users=Object.values(r.users).sort(function(a,b){return b.score-a.score;});var h='';if(!users.length)h='<p style="color:#aaa;text-align:center;padding:40px;">暂无数据</p>';else{h+='<p style="text-align:center;color:#8a7a5a;">🏅共'+users.length+'位学霸</p>';users.forEach(function(u,i){var nc=i===0?'gold':i===1?'silver':i===2?'bronze':'normal';var im=u.name===pn;h+='<div class="rank-item'+(im?' me':'')+'"><div class="rank-num '+nc+'">'+(i+1)+'</div><div class="rank-name">'+u.name+(im?'(我)':'')+'</div><div class="rank-score">🏆'+u.score+'</div></div>';});}$('rankList').innerHTML=h;rap();}
+    function sWT(tab){document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});if(tab==='game'){$('coverScreen').classList.remove('hidden');$('rankScreen').classList.add('hidden');$('stairsPanelScreen').classList.add('hidden');$('tabGame').classList.add('active');}else{$('coverScreen').classList.add('hidden');$('rankScreen').classList.remove('hidden');$('stairsPanelScreen').classList.add('hidden');$('tabRank').classList.add('active');rRL();}}
+
+    // ===== 547组配对库 =====
+    var AP=[];var pc2=0;var upSet=new Set();
+    function ap(m,d,a,b,h){var k=(a+'|'+b).toLowerCase(),kr=(b+'|'+a).toLowerCase();if(upSet.has(k)||upSet.has(kr))return;upSet.add(k);pc2++;AP.push({id:'P'+String(pc2).padStart(5,'0'),m:m,d:d,a:a,b:b,h:h||''});}
+
+    // 力学必记+真题+物理量/公式 (245组)
+    ap('力学',1,'参照物的选取要求','不能选研究对象本身','永远静止');ap('力学',1,'运动与静止的判断','相对于参照物位置是否改变','位置改变则运动');
+    ap('力学',1,'速度的物理意义','表示物体运动快慢 v=s/t','必记知识');ap('力学',1,'匀速直线运动的速度特点','与路程和时间无关','速度大小不变');
+    ap('力学',1,'平均速度不等于','速度的平均值 v=s总/t总','必记知识');ap('力学',1,'刻度尺读数要求','估读到分度值下一位','精确测量');
+    ap('力学',1,'误差与错误的区别','错误可避免误差只能减小','误差不可消除');ap('力学',1,'质量是物体的','基本属性与形状状态位置无关','必记知识');
+    ap('力学',1,'天平使用方法','左物右码先调平','必记知识');ap('力学',1,'移动游码相当于','向右盘加砝码 m物=m砝+m游','必记知识');
+    ap('力学',1,'水的密度数值','1.0×10³ kg/m³=1g/cm³','4℃时');ap('力学',1,'密度与质量和体积的关系','无关是物质特性','必记知识');
+    ap('力学',1,'力的作用的相互性','施力物体同时也是受力物体','相互性');ap('力学',1,'50m短跑正常用时','约8s','2023真题');
+    ap('力学',1,'中学生质量最接近','50kg','2022真题');ap('力学',1,'答卷笔质量约','10g','2016真题');
+    ap('力学',1,'路程的符号和单位','符号s单位m（米）','物理量');ap('力学',1,'时间的符号和单位','符号t单位s（秒）','物理量');
+    ap('力学',1,'速度的符号和单位','符号v单位m/s或km/h','物理量');ap('力学',1,'速度单位换算关系','1m/s=3.6km/h','单位换算');
+    ap('力学',1,'质量的符号和单位','符号m单位kg（千克）','物理量');ap('力学',1,'体积的符号和单位','符号V单位m³或cm³','物理量');
+    ap('力学',1,'密度的符号和单位','符号ρ单位kg/m³或g/cm³','物理量');ap('力学',1,'密度单位换算关系','1g/cm³=1000kg/m³','单位换算');
+    ap('力学',1,'力的符号和单位','符号F单位N（牛顿）','物理量');ap('力学',1,'重力的符号和单位','符号G单位N（牛顿）','物理量');
+    ap('力学',1,'压强的符号和单位','符号p单位Pa（帕斯卡）','物理量');ap('力学',1,'面积的符号和单位','符号S单位m²或cm²','物理量');
+    ap('力学',2,'力的作用效果两种表现','改变形状或改变运动状态','形变或运动');ap('力学',2,'运动状态改变的标志','速度大小或方向改变','非平衡力');
+    ap('力学',2,'力与运动状态的关系','力改变运动状态不是维持运动','必记知识');ap('力学',2,'非平衡力作用下的运动状态','一定改变','必记知识');
+    ap('力学',2,'力的三要素','大小方向作用点','影响力的效果');ap('力学',2,'弹簧测力计原理','弹性限度内伸长与拉力正比','F=kΔx');
+    ap('力学',2,'重力产生原因','由于地球对物体的吸引','必记知识');ap('力学',2,'重力大小与质量关系','成正比 G=mg','必记知识');
+    ap('力学',2,'重力的方向特征','竖直向下指向地心','必记知识');ap('力学',2,'浮力的方向特征','竖直向上与重力相反','必记知识');
+    ap('力学',2,'摩擦力方向','与相对运动方向相反','必记知识');ap('力学',2,'压力的方向','垂直于接触面','必记知识');
+    ap('力学',2,'影响滑动摩擦力的因素','压力和接触面粗糙程度','f=μF压');ap('力学',2,'运动鞋底花纹目的','增大摩擦','2015真题');
+    ap('力学',2,'鞋底花纹目的','增大摩擦','2017真题');ap('力学',2,'瓶盖竖条纹目的','增大摩擦','2022真题');
+    ap('力学',2,'手用力下压墨条','通过增大压力增大摩擦','2025真题');ap('力学',2,'速度公式 v=s/t','变形 s=v·t t=s/v','公式变形');
+    ap('力学',2,'密度公式 ρ=m/V','变形 m=ρV V=m/ρ','公式变形');ap('力学',2,'重力公式 G=mg','变形 m=G/g','公式变形');
+    ap('力学',2,'压强公式 p=F/S','变形 F=pS S=F/p','公式变形');ap('力学',2,'液体压强公式','p=ρgh','公式');
+    ap('力学',2,'功的公式 W=Fs','变形 F=W/s s=W/F','公式变形');ap('力学',2,'功率公式 P=W/t','变形 W=Pt t=W/P','公式变形');
+    ap('力学',3,'牛顿第一定律内容','静止或匀速直线直到外力改变','惯性定律');ap('力学',3,'安全带的作用','防止惯性带来的危害','保护');
+    ap('力学',3,'惯性大小的决定因素','只与质量有关与速度无关','必记知识');ap('力学',3,'惯性的错误说法','受到惯性惯性力等都是错误的','惯性不是力');
+    ap('力学',3,'射出的箭继续向前因为','具有惯性不是受到惯性力','2021真题');ap('力学',3,'地铁刹车不立即停因为','具有惯性','2017真题');
+    ap('力学',3,'冲过终点不停因为','具有惯性','2022真题');ap('力学',3,'鸡蛋未随纸片飞出因为','具有惯性','2019真题');
+    ap('力学',3,'二力平衡条件','等大反向共线同体','四个条件');ap('力学',3,'相互作用力特点','等大反向共线异物','不同物体');
+    ap('力学',3,'平衡力与相互作用力区分','是否同一受力物体','关键判断');ap('力学',3,'静止时重力与支持力','是一对平衡力','2017真题');
+    ap('力学',3,'脚对球和球对脚的力','相互作用力不是平衡力','2015真题');ap('力学',3,'书包带加宽目的','增大受力面积减小压强','2019真题');
+    ap('力学',3,'滑雪板的作用','增大受力面积减小压强','2022真题');ap('力学',3,'水坝下部比上部宽','液体压强随深度增大','2015真题');
+    ap('力学',3,'火车安全黄线依据','流体流速大压强小','2015真题');ap('力学',3,'龙舟并排不能太近','流速大压强小易相撞','2018真题');
+    ap('力学',3,'并排航行不能太近','流体流速越大压强越小','2023真题');ap('力学',3,'杠杆平衡条件 F1L1=F2L2','省力杠杆动力臂>阻力臂','公式');
+    ap('力学',4,'阿基米德原理','F浮=G排=ρ液gV排','浮力=排液重力');ap('力学',4,'物体浮沉条件','比较F浮与G物大小','三种状态');
+    ap('力学',4,'轮船原理','利用空心增大排开液体体积','必记知识');ap('力学',4,'排水量指','轮船满载时排开水的质量','2023真题');
+    ap('力学',4,'潜水艇原理','改变自身重力实现浮沉','必记知识');ap('力学',4,'密度计原理','漂浮F浮=G浮力都相等','必记知识');
+    ap('力学',4,'大气压存在的证明','马德堡半球实验','必记知识');ap('力学',4,'大气压的测量实验','托里拆利实验','水银柱760mm');
+    ap('力学',4,'大气压随高度变化','海拔越高气压越低','高原气压低');ap('力学',4,'流体压强与流速关系','流速大压强小','伯努利原理');
+    ap('力学',4,'用吸管喝饮料利用','大气压强','2015真题');ap('力学',4,'高压锅原理','气压增大沸点升高','2015真题');
+    ap('力学',4,'塑料瓶变瘪证明','大气压强存在','2022真题');ap('力学',4,'纸杯倒置卡片不掉证明','大气压存在','2023真题');
+    ap('力学',4,'天宫课堂乒乓球悬停','不受浮力失重环境','2022真题');ap('力学',4,'动能表达式 Ek=½mv²','与速度平方正比','公式');
+    ap('力学',4,'重力势能表达式 Ep=mgh','与高度正比','公式');ap('力学',4,'机械效率 η=W有/W总×100%','有用功与总功之比','公式');
+    ap('力学',5,'任何机械都不能','省功','功的原理');ap('力学',5,'同一滑轮组物重越大','机械效率越高','必记知识');
+    ap('力学',5,'能量守恒定律','能量不会凭空产生或消失','必记知识');ap('力学',5,'机械能守恒条件','只受重力或弹力作用','必记知识');
+
+    // 声学 (43组)
+    ap('声学',1,'一切发声的物体都在','振动','必记知识');ap('声学',1,'声音传播需要','介质真空不能传声','必记知识');
+    ap('声学',1,'声音三要素','音调响度音色','必记知识');ap('声学',1,'减弱噪声三种途径','声源处传播中人耳处','必记知识');
+    ap('声学',1,'频率的符号和单位','符号f单位Hz（赫兹）','物理量');ap('声学',1,'周期的符号和单位','符号T单位s（秒）','物理量');
+    ap('声学',1,'波长的符号和单位','符号λ单位m（米）','物理量');ap('声学',1,'声音强弱单位','dB（分贝）','物理量');
+    ap('声学',2,'声音传播速度比较','固体>液体>气体','V固最大');ap('声学',2,'频率与周期关系 f=1/T','周期与频率 T=1/f','公式变形');
+    ap('声学',2,'声速公式 v=s/t','340m/s（15℃空气）','公式常数');ap('声学',2,'回声测距公式','s=vt/2','公式');
+    ap('声学',2,'波长公式 λ=v/f','波速公式 v=λf','公式变形');ap('声学',2,'声音尖锐刺耳说明','音调高不是响度大','2017真题');
+    ap('声学',3,'抽气时声音变小原因','介质减少不是音调变低','2017真题');ap('声学',3,'真空不能传声结论','实验+推理得出','2017真题');
+    ap('声学',3,'分辨鸟鸣和流水声靠','音色不是音调','2019真题');ap('声学',3,'茂密树林作用','吸声消声','2019真题');
+    ap('声学',3,'放声高歌的高指','响度大不是音调高','2021真题');ap('声学',3,'辨别不同乐器靠','音色不是响度','2021真题');
+    ap('声学',4,'用力敲鼓提高什么','响度不是音调','2023真题');ap('声学',4,'分辨腰鼓靠什么','音色不是响度','2023真题');
+    ap('声学',4,'响亮描述声音的','响度','2024真题');ap('声学',4,'现场观众听到声音介质','空气','2024真题');
+    ap('声学',4,'振幅越大什么越大','响度不是音调','2025真题');ap('声学',4,'声音在传播中速度变化','同种介质温度不变时不变','2025真题');
+
+    // 光学 (64组)
+    ap('光学',1,'光是一种电磁波','能在真空中传播','必记知识');ap('光学',1,'光沿直线传播条件','同种均匀介质','必记知识');
+    ap('光学',1,'光的三基色','红绿蓝','必记知识');ap('光学',1,'光速的符号和数值','符号c c=3×10⁸m/s','物理量');
+    ap('光学',1,'焦距的符号和单位','符号f单位m或cm','物理量');ap('光学',1,'物距的符号和单位','符号u单位m或cm','物理量');
+    ap('光学',1,'像距的符号和单位','符号v单位m或cm','物理量');ap('光学',1,'折射率的符号','符号n无单位','物理量');
+    ap('光学',2,'镜面反射和漫反射','每条光线都遵循反射定律','必记知识');ap('光学',2,'平面镜成像特点','像和物关于镜面对称','必记知识');
+    ap('光学',2,'人远离平面镜像大小','不变','必记知识');ap('光学',2,'凸透镜对光的作用','会聚','必记知识');
+    ap('光学',2,'凹透镜对光的作用','发散','必记知识');ap('光学',2,'折射率公式 n=c/v','n>1','公式');
+    ap('光学',2,'凸透镜成像公式','1/f=1/u+1/v','公式');ap('光学',2,'水中倒影是什么现象','光的反射','2023真题');
+    ap('光学',2,'手影游戏是什么现象','光的直线传播','2023真题');ap('光学',2,'海市蜃楼是什么现象','光的折射','2023真题');
+    ap('光学',3,'光的折射定义','斜射入另一种介质方向改变','必记知识');ap('光学',3,'反射光路折射光路','都是可逆的','必记知识');
+    ap('光学',3,'白光由什么组成','各种色光复合','必记知识');ap('光学',3,'验钞机利用什么光','紫外线不是红外线','2019真题');
+    ap('光学',3,'舞蹈演员平面镜中成','等大虚像不是实像','2019真题');ap('光学',3,'筷子弯折是什么现象','光的折射','2019真题');
+    ap('光学',3,'彩色电视色彩由什么混合','红绿蓝不是红黄蓝','2020真题');ap('光学',4,'一倍焦距分虚实','二倍焦距分大小','必记知识');
+    ap('光学',4,'实像与虚像判断','实像能成在光屏上','必记知识');ap('光学',4,'近视眼矫正用','凹透镜','必记知识');
+    ap('光学',4,'远视眼矫正用','凸透镜','必记知识');ap('光学',4,'照相机镜头相当于','凸透镜','2020真题');
+    ap('光学',4,'拍照时镜头距离','大于二倍焦距','2020真题');ap('光学',4,'想把文字拍更大','镜头靠近石碑','2020真题');
+    ap('光学',4,'凸透镜成像实验调节','烛焰透镜光屏中心同高','2024真题');ap('光学',4,'手指遮挡凸透镜一部分','光屏上仍能成完整像','2024真题');
+    ap('光学',5,'桥在水中的倒影','光的反射虚像','2022真题');ap('光学',5,'雪地上的影子','光的直线传播不是折射','2022真题');
+    ap('光学',5,'光的色散现象表明','太阳光由多种色光组成','2021真题');ap('光学',5,'小巴车摄像机镜头','相当于凸透镜','2023真题');
+    ap('光学',5,'靠近公交站牌像变化','变大','2023真题');ap('光学',5,'光屏靠近透镜后清晰','佩戴的是远视眼镜','2024真题');
+
+    // 热学 (81组)
+    ap('热学',1,'物质由什么组成','分子或原子','必记知识');ap('热学',1,'原子由什么组成','原子核和电子','必记知识');
+    ap('热学',1,'原子核由什么组成','质子和中子','必记知识');ap('热学',1,'分子动理论','大量分子不停运动有间隙','必记知识');
+    ap('热学',1,'扩散现象','不同物质相互接触彼此进入','分子运动');ap('热学',1,'温度表示','物体冷热程度','必记知识');
+    ap('热学',1,'温度计原理','利用液体热胀冷缩','必记知识');ap('热学',1,'人体正常体温','约37℃','必记知识');
+    ap('热学',1,'温度的符号和单位','符号t(T)单位℃(K)','物理量');ap('热学',1,'热量的符号和单位','符号Q单位J（焦耳）','物理量');
+    ap('热学',1,'比热容的符号和单位','符号c单位J/(kg·℃)','物理量');ap('热学',1,'热值的符号和单位','符号q单位J/kg','物理量');
+    ap('热学',2,'扩散快慢与温度','温度越高扩散越快','必记知识');ap('热学',2,'分子间引力斥力','同时存在同时增大减小','必记知识');
+    ap('热学',2,'固体难压缩原因','分子间有斥力','必记知识');ap('热学',2,'固体难拉伸原因','分子间有引力','必记知识');
+    ap('热学',2,'晶体和非晶体区别','有无固定熔点','必记知识');ap('热学',2,'蒸发发生位置','只发生在液体表面','必记知识');
+    ap('热学',2,'沸腾发生位置','液体内部和表面同时','必记知识');ap('热学',2,'热量公式 Q=cmΔt','变形 c=Q/(mΔt)','公式变形');
+    ap('热学',2,'吸热公式','Q吸=cm(t-t₀)','公式');ap('热学',2,'放热公式','Q放=cm(t₀-t)','公式');
+    ap('热学',2,'燃料完全燃烧放热','Q=mq','公式');ap('热学',2,'热平衡方程','Q吸=Q放无热量损失','公式');
+    ap('热学',3,'影响蒸发快慢因素','温度表面积空气流速','三个因素');ap('热学',3,'液体沸腾特点','吸热但温度保持不变','必记知识');
+    ap('热学',3,'液面气压与沸点','气压越高沸点越高','必记知识');ap('热学',3,'雾露白气是','液化形成','必记知识');
+    ap('热学',3,'霜窗花是','凝华形成','必记知识');ap('热学',3,'樟脑球变小','升华','必记知识');
+    ap('热学',3,'冰挂形成是什么','凝固不是凝华','2015真题');ap('热学',3,'云的形成是什么','液化','2015真题');
+    ap('热学',3,'霜的形成是什么','凝华不是凝固','2015真题');ap('热学',3,'雾的形成是什么','液化','2015真题');
+    ap('热学',3,'白气形成是什么','液化不是汽化','2019真题');ap('热学',3,'水再次沸腾说明','沸点与水面气压有关','2019真题');
+    ap('热学',4,'改变内能的两种方法','做功和热传递等效','必记知识');ap('热学',4,'物体内能增加温度','不一定升高','必记知识');
+    ap('热学',4,'比热容大特点','吸热多放热多升温慢','必记知识');ap('热学',4,'内燃机四冲程','吸气压缩做功排气','必记知识');
+    ap('热学',4,'压缩冲程能量转化','机械能→内能','必记知识');ap('热学',4,'做功冲程能量转化','内能→机械能','必记知识');
+    ap('热学',4,'冰块保鲜利用什么','冰熔化吸热','2020真题');ap('热学',4,'体温计利用什么原理','液体热胀冷缩','2020真题');
+    ap('热学',5,'饮料瓶外小水珠','液化不是凝华','2020真题');ap('热学',5,'露和霜','露液体霜固体','2023真题');
+    ap('热学',5,'霜由水蒸气什么形成','凝华不是凝固','2023真题');ap('热学',5,'闻到酒精气味说明','分子永不停息运动','2015真题');
+    ap('热学',5,'热量能不能说含有','不能热量是过程量','2024真题');ap('热学',5,'蜂蜡变液体','熔化','2024真题');
+    ap('热学',5,'干冰直接变气态','升华','2025真题');ap('热学',5,'热值比热容密度','都是物质本身性质','必记知识');
+    ap('热学',5,'能量守恒定律','能量不会凭空产生或消失','必记知识');ap('热学',5,'水的比热容数值','4.2×10³J/(kg·℃)','常数');
+
+    // 电学 (73组)
+    ap('电学',1,'带电体的基本性质','吸引轻小物体','必记知识');ap('电学',1,'摩擦起电的实质','电子转移不是创造电荷','必记知识');
+    ap('电学',1,'电路的组成','电源导线开关用电器','必记知识');ap('电学',1,'电路的三种状态','通路断路短路','必记知识');
+    ap('电学',1,'家庭电路电压','220V','必记知识');ap('电学',1,'人体安全电压','≤36V','必记知识');
+    ap('电学',1,'一节干电池电压','1.5V','必记知识');ap('电学',1,'电流的符号和单位','符号I单位A（安培）','物理量');
+    ap('电学',1,'电压的符号和单位','符号U单位V（伏特）','物理量');ap('电学',1,'电阻的符号和单位','符号R单位Ω（欧姆）','物理量');
+    ap('电学',1,'电功的符号和单位','符号W单位J或kW·h','物理量');ap('电学',1,'电功率的符号和单位','符号P单位W（瓦特）','物理量');
+    ap('电学',2,'电流表使用注意事项','串联正入负出不超过量程','必记知识');ap('电学',2,'电压表使用注意事项','并联正入负出不超过量程','必记知识');
+    ap('电学',2,'影响电阻大小因素','材料长度横截面积温度','R=ρL/S');ap('电学',2,'欧姆定律 I=U/R','变形 U=IR R=U/I','公式变形');
+    ap('电学',2,'电功公式 W=UIt','变形 W=Pt','公式变形');ap('电学',2,'电功率公式 P=UI','变形 P=I²R P=U²/R','公式变形');
+    ap('电学',2,'焦耳定律 Q=I²Rt','电热与电流平方正比','公式');ap('电学',2,'串联电阻 R总=R₁+R₂','并联电阻 1/R总=1/R₁+1/R₂','公式');
+    ap('电学',2,'LED灯材料属于','半导体','2015真题');ap('电学',2,'白光LED用什么色光','红绿蓝','2015真题');
+    ap('电学',3,'发现有人触电应','立即切断电源不能手拉','2015真题');ap('电学',3,'开关必须接在','火线上不能接零线','2015真题');
+    ap('电学',3,'核电站获得核能途径','核裂变','2015真题');ap('电学',3,'煤石油天然气属于','不可再生能源','2015真题');
+    ap('电学',3,'三线插头最长脚是','接地线','2016真题');ap('电学',3,'家庭电路维修前','断电','2016真题');
+    ap('电学',3,'拔插头正确做法','捏插头不能拽电线','2016真题');ap('电学',3,'发电机原理','电磁感应','2016真题');
+    ap('电学',3,'纯电阻电路Q与W','相等','必记知识');ap('电学',3,'非纯电阻电路Q与W','Q<W','必记知识');
+    ap('电学',4,'安全用电基本原则','不接触低压不靠近高压','必记知识');ap('电学',4,'开关连接位置','用电器和火线之间','必记知识');
+    ap('电学',4,'额定功率与实际功率','额定只有一个实际无数','必记知识');ap('电学',4,'伏安法测电阻原理','R=U/I','必记知识');
+    ap('电学',4,'伏安法测电功率原理','P=UI','必记知识');ap('电学',4,'串联电路电流特点','处处相等','必记知识');
+    ap('电学',4,'并联电路电压特点','处处相等','必记知识');ap('电学',5,'太阳能属于','可再生能源','2020真题');
+    ap('电学',5,'验电器工作原理','同种电荷相互排斥','2024真题');ap('电学',5,'热成像仪检测什么','红外线','2025真题');
+    ap('电学',5,'图像传输利用什么','电磁波','2025真题');ap('电学',5,'空间站画面传回利用','电磁波','2024真题');
+    ap('电学',5,'绝缘皮破损电线','不能安全使用','2025真题');
+
+    // 磁学 (16组)
+    ap('综合',2,'磁体定义','具有磁性的物体吸引铁钴镍','必记知识');ap('综合',2,'同名磁极','相互排斥','必记知识');
+    ap('综合',2,'异名磁极','相互吸引','必记知识');ap('综合',2,'磁场真实存在','磁感线是假想的','必记知识');
+    ap('综合',3,'磁体外部磁感线方向','N极出发回到S极','必记知识');ap('综合',3,'地磁南极在地理','北极附近','必记知识');
+    ap('综合',4,'奥斯特实验结论','通电导体周围存在磁场','电生磁');ap('综合',4,'电磁铁磁性强弱因素','电流大小线圈匝数有无铁芯','三个因素');
+    ap('综合',4,'电磁铁优点','磁性有无强弱极性都可控','三个可控');ap('综合',5,'电动机原理','通电导体在磁场中受力','电能→机械能');
+    ap('综合',5,'发电机原理','电磁感应现象','机械能→电能');ap('综合',5,'产生感应电流条件','闭合电路部分导体切割磁感线','三个条件');
+    ap('综合',5,'化石能源','煤石油天然气','不可再生');ap('综合',5,'核能分类','一次能源不可再生','核裂变核聚变');
+    ap('综合',5,'电磁波速度','c=3×10⁸m/s','常数');ap('综合',5,'太阳能电池','太阳能→电能','能源转化');
+
+    // 通用常数 (25组) - 放入综合厅
+    ap('综合',1,'真空中光速数值','c=3×10⁸m/s','常数');ap('综合',1,'15℃空气中声速','340m/s','常数');
+    ap('综合',1,'水的密度数值','1.0×10³kg/m³','常数');ap('综合',1,'水的比热容数值','4.2×10³J/(kg·℃)','常数');
+    ap('综合',1,'重力加速度g值','9.8N/kg或10N/kg','常数');ap('综合',1,'标准大气压数值','1.013×10⁵Pa','常数');
+    ap('综合',1,'标准大气压水银柱','760mm','常数');ap('综合',1,'家庭电路电压值','220V','常数');
+    ap('综合',1,'人体安全电压值','≤36V','常数');ap('综合',1,'一节干电池电压值','1.5V','常数');
+    ap('综合',1,'中国交流电频率','50Hz','常数');ap('综合',1,'冰的熔点','0℃标准大气压','常数');
+    ap('综合',1,'水的沸点','100℃标准大气压','常数');ap('综合',1,'人体正常体温值','约37℃','常数');
+    ap('综合',1,'光在水中速度','约2.25×10⁸m/s','常数');ap('综合',1,'光在玻璃中速度','约2×10⁸m/s','常数');
+    ap('综合',1,'1光年距离','≈9.46×10¹⁵m','常数');ap('综合',1,'1kW·h换算','=3.6×10⁶J','常数');
+    ap('综合',1,'1m/s换算','=3.6km/h','常数');ap('综合',1,'1g/cm³换算','=1000kg/m³','常数');
+    ap('综合',1,'人步行速度约','1.1m/s≈4km/h','常数');ap('综合',1,'自行车速度约','5m/s≈18km/h','常数');
+    ap('综合',1,'电磁波速度值','c=3×10⁸m/s','常数');ap('综合',1,'人耳听觉频率范围','20Hz~20000Hz','常数');
+    ap('综合',1,'1标准大气压水柱','约10.3m水柱','常数');
+
+    // 房间配置（综合厅台阶数增加以容纳更多配对）
+    var RMS=[{id:0,floor:'1F',scientist:'伽利略',mod:'声学',tS:10,sp:5},{id:1,floor:'2F',scientist:'牛顿',mod:'光学',tS:16,sp:4},{id:2,floor:'3F',scientist:'阿基米德',mod:'力学',tS:20,sp:5},{id:3,floor:'4F',scientist:'帕斯卡',mod:'力学',tS:20,sp:5},{id:4,floor:'5F',scientist:'欧姆',mod:'电学',tS:10,sp:5},{id:5,floor:'6F',scientist:'法拉第',mod:'电学',tS:9,sp:3},{id:6,floor:'7F',scientist:'焦耳',mod:'热学',tS:20,sp:5},{id:7,floor:'8F',scientist:'爱因斯坦',mod:'综合',tS:10,sp:5}];
+
+    function gdl(si,t){var r=si/t;if(r<0.2)return 1;if(r<0.4)return 2;if(r<0.6)return 3;if(r<0.8)return 4;return 5;}
+    function gG(){$('coverScreen').classList.add('hidden');$('rankScreen').classList.add('hidden');$('stairsPanelScreen').classList.add('hidden');$('gameScreen').classList.remove('hidden');}
+    function bTC(){$('gameScreen').classList.add('hidden');$('stairsPanelScreen').classList.add('hidden');$('coverScreen').classList.remove('hidden');hM();sp();utl();}
+    function sSP(idx){var rm=RMS[idx];var ms=Math.max(us[idx]||0,rm.tS);var h='<h3>'+rm.scientist+'·'+(rm.mod==='综合'?'综合厅':rm.mod)+'</h3><p style="color:#8a7a5a;">已通关，点击台阶任意挑战：</p>';for(var i=0;i<rm.tS;i++){var done=i<ms;h+='<button class="stair-btn '+(done?'done':'locked')+'" '+(done?'onclick="window.sSF('+idx+','+i+')"':'disabled')+'>'+(i%rm.sp+1)+'</button>';if((i+1)%rm.sp===0)h+='<br>';}$('stairsPanelContent').innerHTML=h;$('coverScreen').classList.add('hidden');$('rankScreen').classList.add('hidden');$('gameScreen').classList.add('hidden');$('stairsPanelScreen').classList.remove('hidden');}
+    window.sSF=function(idx,si3){iA();cr=idx;cs=si3;ts=0;ri=[];gG();lS();};
+    function eR(idx){if(!ru(idx)){sM('🔒星球未解锁','请先通关上一个星球！','<button onclick="window.hMF()">确定</button>');return;}iA();cr=idx;if(rcc(idx)){sSP(idx);return;}cs=us[idx]||0;ts=0;ri=[];gG();lS();}
+    window.hMF=function(){hM();};
+    function rSD(){var rm=RMS[cr];var ul=us[cr]||0;var c2=Math.floor(ul/rm.sp),tots=Math.ceil(rm.tS/rm.sp);var dc=$('stageDots');dc.innerHTML='';for(var i=0;i<tots;i++){var d=document.createElement('div');d.className='stage-dot';if(i<c2){d.classList.add('done');d.textContent='✓';}else if(i===c2){d.classList.add('current');d.textContent=i+1;}else{d.classList.add('locked');d.textContent='🔒';}dc.appendChild(d);}}
+    function lS(){var rm=RMS[cr],mod=rm.mod,dl=gdl(cs,rm.tS);var pool=AP.filter(function(p){return p.m===mod;});if(mod=='综合')pool=AP;if(pool.length>8)pool=pool.filter(function(p){return p.d===dl;});var fresh=pool.filter(function(p){return!ri.includes(p.id);});var src=fresh;if(src.length<4){var used=pool.filter(function(p){return ri.includes(p.id);});src=src.concat(used.sort(function(){return Math.random()-0.5;}).slice(0,4-src.length));}var sf=src.sort(function(){return Math.random()-0.5;});var sel=[];for(var i=0;i<sf.length;i++){var p=sf[i];if(sel.length>=4)break;if(!sel.find(function(s){return s.id===p.id;})){sel.push(p);if(!ri.includes(p.id))ri.push(p.id);}}cds=[];sel.forEach(function(p,i){cds.push({id:i*2,pi:i,txt:p.a,hint:p.h,elim:false});cds.push({id:i*2+1,pi:i,txt:p.b,hint:p.h,elim:false});});cds.sort(function(){return Math.random()-0.5;});si2=null;ga=true;pc=false;mv=8;$('roomTag').textContent=rm.scientist+'·'+(mod=='综合'?'综合厅':mod);$('stairTag').textContent='台阶'+(Math.floor(cs/rm.sp)+1)+'-'+(cs%rm.sp+1);$('scoreVal').textContent=ts;$('movesVal').textContent=mv;$('hintCnt').textContent=hn;$('shuffleCnt').textContent=sn;$('bombCnt').textContent=bn;rSD();hM();rC();}
+    function rC(){var rem=cds.filter(function(c){return!c.elim;});$('cardGrid').innerHTML='';rem.forEach(function(c){var oi=cds.indexOf(c);var el=document.createElement('div');el.className='pcard';if(si2===oi)el.classList.add('selected');el.textContent=c.txt;el.addEventListener('click',function(){oC(oi);});$('cardGrid').appendChild(el);});if(rem.length===0&&ga){ga=false;ts+=mv*10;$('scoreVal').textContent=ts;var nu=Math.min((us[cr]||0)+1,RMS[cr].tS);us[cr]=nu;uS(pn,ts);sp();if(cs+1<RMS[cr].tS){cs++;sM('✅台阶通过','','<button onclick="window.lSF()">继续</button>');}else{rc2[cr]=true;ra[cr]=true;if(cA()){ia2=true;ig2=true;}sp();utl();sM('🏆星球通关！获得管理权限！','总分:'+ts,'<button onclick="window.bTF()">返回星云螺旋</button>');}}}
+    window.lSF=function(){lS();};window.bTF=function(){bTC();};
+    function oC(idx){if(!ga||mv<=0)return;var c=cds[idx];if(c.elim)return;if(si2===null){si2=idx;rC();return;}if(si2===idx){si2=null;rC();return;}var f=cds[si2];if(f.pi===c.pi&&f.id!==c.id){f.elim=c.elim=true;pc++;ts+=10*pc;if(pc>=2){sco2();sCP('🔥'+pc+'连击！');}else sc2();si2=null;rC();$('scoreVal').textContent=ts;}else{mv--;pc=0;sw2();t('❌剩余'+mv+'步');si2=null;rC();$('movesVal').textContent=mv;if(mv<=0&&cds.filter(function(c){return!c.elim;}).length>0){ga=false;setTimeout(function(){sM('😵步数耗尽','','<button onclick="window.lSF()">🔄重试</button>');},500);}}}
+    function sCP(t2){var p=document.createElement('div');p.className='combo-pop';p.textContent=t2;document.body.appendChild(p);setTimeout(function(){p.remove();},800);}
+    function uH(){if(pc||!ga)return;if(hn<=0){t('提示不足');return;}pc=true;hn--;$('hintCnt').textContent=hn;sp();var um=cds.filter(function(c){return!c.elim;});var pm=new Map();um.forEach(function(c){if(!pm.has(c.pi))pm.set(c.pi,[]);pm.get(c.pi).push(c);});var tg=null;for(var v of pm){if(v[1].length===2){tg=v[1];break;}}if(!tg){t('无配对');pc=false;return;}var i0=cds.indexOf(tg[0]),i1=cds.indexOf(tg[1]);var all=$('cardGrid').querySelectorAll('.pcard');if(all[i0])all[i0].classList.add('hint-glow');if(all[i1])all[i1].classList.add('hint-glow');setTimeout(function(){if(all[i0])all[i0].classList.remove('hint-glow');if(all[i1])all[i1].classList.remove('hint-glow');pc=false;},1800);}
+    function uSh(){if(pc||!ga)return;if(sn<=0){t('洗牌不足');return;}pc=true;sn--;$('shuffleCnt').textContent=sn;sp();var ac=cds.filter(function(c){return!c.elim;});ac.sort(function(){return Math.random()-0.5;});var si3=0;cds.forEach(function(c,i){if(!c.elim)cds[i]=ac[si3++];});si2=null;rC();setTimeout(function(){pc=false;},400);}
+    function uB(){if(pc||!ga)return;if(bn<=0){t('炸弹不足');return;}pc=true;bn--;$('bombCnt').textContent=bn;sp();var ac=cds.filter(function(c){return!c.elim;});if(ac.length<2){t('卡片少');pc=false;return;}var pm=new Map();ac.forEach(function(c){if(!pm.has(c.pi))pm.set(c.pi,[]);pm.get(c.pi).push(c);});var tg=null;for(var v of pm){if(v[1].length===2){tg=v[1];break;}}if(tg){tg[0].elim=tg[1].elim=true;}else ac[0].elim=true;si2=null;rC();setTimeout(function(){pc=false;},400);}
+    function sS(){mv+=3;$('movesVal').textContent=mv;t('📢+3步');}
+
+    document.addEventListener('DOMContentLoaded',function(){
+        $('btnLogin').addEventListener('click',login);$('adminLink').addEventListener('click',sAL);
+        $('btnAdminLogin').addEventListener('click',aL);$('btnBackUser').addEventListener('click',bUL);
+        $('btnLogout').addEventListener('click',logout);$('btnBackCover').addEventListener('click',function(){sWT('game');});
+        $('btnBackHome').addEventListener('click',bTC);$('btnBackFromStairs').addEventListener('click',bTC);
+        $('tabGame').addEventListener('click',function(){sWT('game');});$('tabRank').addEventListener('click',function(){sWT('rank');});
+        $('btnHint').addEventListener('click',uH);$('btnShuffle').addEventListener('click',uSh);
+        $('btnBomb').addEventListener('click',uB);$('btnShare').addEventListener('click',sS);
+        document.querySelectorAll('.planet-spiral').forEach(function(p){p.addEventListener('click',function(){eR(parseInt(this.dataset.room));});});
+        var lu=localStorage.getItem('lu4');if(lu){pn=lu;if(lp()){$('loginScreen').classList.add('hidden');$('coverScreen').classList.remove('hidden');$('welcomeUser').textContent=pn;if(ia2||ig2||Object.values(ra).some(function(v){return v;}))$('adminBadge').style.display='inline';utl();}}
+    });
+    console.log('✅ 物理贴贴 · 547组配对 · 全部整合完成！');
+})();
+</script>
+</body>
+</html>
